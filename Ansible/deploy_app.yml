@@ -1,0 +1,16 @@
+- name: App deployment
+  hosts: master
+  become: yes
+  vars:
+    project_dir: /home/master/marineford/
+  tasks:
+    - name: Pulling code
+      ansible.builtin.shell:
+        cmd: git pull
+        chdir: "{{ project_dir }}"
+    - name: Kubectl apply
+      ansible.builtin.shell:
+        cmd: kubectl apply -f marineford.yml
+        chdir: "{{ project_dir }}"
+    - name: Kubectl restart
+      ansible.builtin.shell: kubectl rollout restart deployment marineford-v1
