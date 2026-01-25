@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: marineford-v1
+  name: marineford-v1
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: marineford-v1
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: marineford-v1
+    spec:
+      containers:
+      - image: fwassim/marineford-api:v1
+        name: marineford-api
+        resources: {}
+        ports:
+          - containerPort: 5000
+status: {}

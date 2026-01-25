@@ -1,0 +1,17 @@
+- name: Docker Installation
+  hosts: workers
+  become: yes
+  tasks:
+  - name: apt update
+    ansible.builtin.apt:
+      update-cache: true
+  - name: docker installation
+    ansible.builtin.apt:
+      name: docker.io
+      state: present
+  - name: Adding user to group docker
+    ansible.builtin.user:
+      name: master
+      groups: docker
+      append: yes
+

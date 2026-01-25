@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Marineford Wanted</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="header">
+        <h1>MARINEFORD DATABASE</h1>
+        <p>Server : <strong>{{ server_name }}</strong></p>
+    </div>
+
+    <div class="container">
+        {% for pirate in pirates %}
+        <div class="wanted-poster">
+            <img src="/static/images/{{ pirate.img }}" alt="{{ pirate.name }}">
+            <h2>{{ pirate.name }}</h2>
+            <p class="bounty">BERRY {{ pirate.Bounty }}</p>
+            <p class="crew">{{ pirate.crew }}</p>
+        </div>
+        {% endfor %}
+    </div>
+</body>
+</html>
