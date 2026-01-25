@@ -19,6 +19,7 @@ spec:
       - image: fwassim/marineford-api:v1
         name: marineford-api
         resources: {}
+        imagePullPolicy: Always
         ports:
           - containerPort: 5000
 status: {}
