@@ -1,135 +1,176 @@
-# ⚓ Project Marineford: End-to-End DevOps CI/CD Pipeline
+# Automated Kubernetes Deployment
 
 <div align="center">
-  <img src="https://media.tenor.com/0DyHGG2UzEQAAAAM/garp-galaxy-impact.gif" width="600" alt="Garp Galaxy Impact">
+
+**Automating the deployment of a containerized Flask application to a multi-node Kubernetes cluster.**
+
+Built with Docker, K3s, Ansible and GitHub Actions.
+
+<br/>
+
+![Python](https://img.shields.io/badge/Python-3.9-3776AB?style=flat-square&logo=python&logoColor=white)
+![Flask](https://img.shields.io/badge/Flask-2.0-000000?style=flat-square&logo=flask&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Containerization-2496ED?style=flat-square&logo=docker&logoColor=white)
+![Kubernetes](https://img.shields.io/badge/Kubernetes-K3s-326CE5?style=flat-square&logo=kubernetes&logoColor=white)
+![Ansible](https://img.shields.io/badge/Ansible-Automation-EE0000?style=flat-square&logo=ansible&logoColor=white)
+![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-CI-2088FF?style=flat-square&logo=githubactions&logoColor=white)
+
 </div>
 
 ---
 
-## 🏴‍☠️ Context and Disclaimer
-The name **"Marineford"** is a reference to the iconic arc from the *One Piece* anime. I enjoy adding a narrative layer to my engineering projects to make them more engaging.
+## Overview
 
-While the theme is fictional, the infrastructure, automation, and technologies used here are **100% real and strictly professional.** 
+This project explores the automation of an application deployment workflow, from Docker image creation to deployment on a Kubernetes cluster.
 
----
+The infrastructure consists of three Ubuntu virtual machines running K3s, with one control-plane node and two worker nodes.
 
-## 📋 Project Overview
+GitHub Actions handles image building and publishing, while Ansible automates Kubernetes deployment operations.
 
-This project demonstrates a complete **DevOps Lifecycle** implementation. It starts with a Python Flask application and ends with an automated deployment on a Kubernetes cluster, orchestrated by Ansible and GitHub Actions.
-
-**The Goal:** Build a resilient, self-healing architecture with **Zero Downtime** deployment capabilities.
-
-### 🛠 Technology Stack
-![Python](https://img.shields.io/badge/Python-3.9-blue?style=for-the-badge&logo=python&logoColor=white)
-![Flask](https://img.shields.io/badge/Flask-2.0-black?style=for-the-badge&logo=flask&logoColor=white)
-![Docker](https://img.shields.io/badge/Docker-Container-blue?style=for-the-badge&logo=docker&logoColor=white)
-![Kubernetes](https://img.shields.io/badge/Kubernetes-K3s-326ce5?style=for-the-badge&logo=kubernetes&logoColor=white)
-![Ansible](https://img.shields.io/badge/Ansible-Automation-red?style=for-the-badge&logo=ansible&logoColor=white)
-![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-CI-2088FF?style=for-the-badge&logo=github-actions&logoColor=white)
-
----
-
-## 🏗 Architecture & Pipeline
-
-The workflow follows a strict **DevOps** pipeline:
-
-1.  **Development:** Code written in Python (Flask) on VS Code (Remote SSH).
-2.  **Containerization:** Application packaged into a lightweight Docker container.
-3.  **Continuous Integration (CI):** GitHub Actions automatically builds and pushes the image to Docker Hub upon every commit to `main`.
-4.  **Infrastructure:** A multi-node **Kubernetes (K3s)** cluster (1 Master, 2 Workers).
-5.  **Continuous Deployment (CD):** Ansible automates the orchestration, instructing Kubernetes to perform Rolling Updates without service interruption.
-
-### 📐 Architecture Diagram
+## Architecture
 
 ```mermaid
-graph LR
-    Dev["💻 Dev (VS Code)"] -- git push --> GitHub["🐙 GitHub Repo"]
-    GitHub -- Action Trigger --> CI["⚙️ CI Pipeline"]
-    CI -- Build & Push --> DH["🐳 Docker Hub"]
-    
-    subgraph Infrastructure
-        Ansible["📜 Ansible Playbook"] -- Orchestrates --> Master["☸️ K3s Master"]
-        Master -- Rolling Update --> Worker1["📦 Node 1"]
-        Master -- Rolling Update --> Worker2["📦 Node 2"]
+flowchart TB
+    DEV["Developer"]
+    GH["GitHub Repository"]
+    CI["GitHub Actions"]
+    DH["Docker Hub"]
+
+    subgraph INFRA["K3s Cluster"]
+        CP["Control Plane"]
+        W1["Worker Node 1"]
+        W2["Worker Node 2"]
+        CP --> W1
+        CP --> W2
     end
-    
-    Dev -- Run Playbook --> Ansible
-    DH -. Pull Image .-> Worker1
-    DH -. Pull Image .-> Worker2
+
+    A["Ansible Playbooks"]
+
+    DEV -->|"Git Push"| GH
+    GH -->|"Workflow Trigger"| CI
+    CI -->|"Build & Push Image"| DH
+    DEV -->|"Execute Playbook"| A
+    A -->|"Apply Kubernetes Manifests"| CP
+    DH -.->|"Pull Image"| W1
+    DH -.->|"Pull Image"| W2
 ```
----
 
-## The Workflow:
+## Technology Stack
 
-### 1. The Application Layer (`app.py`)
-A Python API serving as the core microservice.
-* **Logic:** Returns JSON responses indicating the current version.
-* **Evolution:** Capable of seamless version upgrades (V1 -> V2 -> V3).
+| Technology | Purpose |
+|---|---|
+| <img src="https://cdn.simpleicons.org/python/3776AB" width="16"/> Python / Flask | REST API |
+| <img src="https://cdn.simpleicons.org/docker/2496ED" width="16"/> Docker | Application containerization |
+| <img src="https://cdn.simpleicons.org/kubernetes/326CE5" width="16"/> K3s | Kubernetes orchestration |
+| <img src="https://cdn.simpleicons.org/ansible/EE0000" width="16"/> Ansible | Infrastructure and deployment automation |
+| <img src="https://cdn.simpleicons.org/githubactions/2088FF" width="16"/> GitHub Actions | CI pipeline |
+| <img src="https://cdn.simpleicons.org/dockerhub/2496ED" width="16"/> Docker Hub | Container image registry |
+| Ubuntu | Virtual machine operating system |
 
-### 2. Containerization (Docker)
-I used a multi-stage `Dockerfile` strategy.
-* **Base Image:** `python:3.9-slim` for minimized footprint.
-* **Registry:** Images are pushed to Docker Hub (`fwassim/marineford-api`).
-* **Tagging Strategy:** Uses `imagePullPolicy: Always` to ensure the latest artifact is deployed.
+## Implementation
 
-### 3. CI Pipeline (GitHub Actions)
-Located in `.github/workflows/ci.yml`.
-* **Trigger:** Push to `main`.
-* **Action:** Authenticates with Docker Hub secrets, builds the image, and pushes it to the registry.
+### 01. Application Development
 
-### 4. CD Pipeline (Ansible)
-Located in `Ansible/deploy_app.yml`.
-Instead of manual operations, Ansible acts as the **Admiral** of the fleet:
-1.  **Git Pull:** Synchronizes infrastructure manifests.
-2.  **Kubectl Apply:** Updates the cluster state.
-3.  **Rollout Restart:** Triggers a zero-downtime update.
+Developed a lightweight Python API using Flask.
 
----
+- Returns JSON responses containing the application version.
+- Supports version changes to test application updates.
+- Uses a simple structure with static assets and templates.
 
-## ⚡ Challenges and Solutions
-### 🛑 The "Floating IP" Issue
-**Problem:** Initially, the Virtual Machines were using DHCP (dynamic IPs). Every time the VMs rebooted, the IP addresses changed, breaking the communication between the Kubernetes Master and Workers, and causing the Ansible inventory to fail.
+### 02. Containerization
 
-**Solution:**
-* I manually reconfigured the network layer of the Ubuntu VMs.
-* I modified the **Netplan configuration** (`/etc/netplan/`) to enforce **Static IP addresses** for all nodes.
-* This ensured permanent connectivity and stability for the Cluster and Ansible automation.
+Packaged the Flask application into a Docker image.
 
-### 🛑 The "Image Cache" Trap
-**Problem:** Kubernetes wasn't pulling the new code updates because it cached the `v1` image locally.
-**Solution:** I implemented `imagePullPolicy: Always` in the deployment manifest to force K3s to check the registry for updates, even if the tag remains the same.
+- Uses `python:3.9-slim` as the base image.
+- Builds the `fwassim/marineford-api` image.
+- Publishes the image to Docker Hub.
 
----
-## 📂 Project Structure
+### 03. Continuous Integration
+
+Implemented a GitHub Actions workflow in `.github/workflows/ci.yml`.
+
+- Triggered by pushes to the `main` branch.
+- Authenticates with Docker Hub using GitHub Secrets.
+- Builds the application image.
+- Publishes the image to the registry.
+
+### 04. Kubernetes Infrastructure
+
+Set up a multi-node K3s cluster across three Ubuntu virtual machines.
+
+- One control-plane node.
+- Two worker nodes.
+- Kubernetes Deployment and Service manifests.
+- Application deployment across the worker nodes.
+
+### 05. Deployment Automation
+
+Created Ansible playbooks to automate cluster configuration and application deployment.
+
+- Configures worker nodes.
+- Installs and joins K3s workers to the cluster.
+- Synchronizes Kubernetes manifests.
+- Applies deployment and service configurations.
+- Triggers application rollout restarts.
+
+## Challenges & Solutions
+
+### Dynamic IP Addressing
+
+**Problem**
+
+Virtual machines initially relied on DHCP. IP addresses changed after reboots, disrupting communication between cluster nodes and Ansible.
+
+**Solution**
+
+Configured static IP addresses on Ubuntu virtual machines using Netplan to maintain stable network connectivity.
+
+### Docker Image Caching
+
+**Problem**
+
+Kubernetes continued using a previously cached image when application updates were published under the same image tag.
+
+**Solution**
+
+Configured `imagePullPolicy: Always` in the Kubernetes Deployment manifest to make Kubernetes check the registry for the image when starting containers.
+
+## Repository Structure
 
 ```text
-marineford/
+.
 ├── .github/
 │   └── workflows/
-│       └── ci.yml          # GitHub Actions Pipeline definition
+│       └── ci.yml
 ├── Ansible/
-│   ├── hosts.ini           # Inventory (Master and Workers)
+│   ├── hosts.ini
 │   ├── deploy_image.yml
-│   ├── join_k3s.yml        # Install k3s on the Workers and connecting them with the Master
-│   ├── install_docker.yml  # Installing Docker on the Workers
-│   ├── nginx.yml           # To test the cluster
-│   └── deploy_app.yml      # The CD Playbook
+│   ├── join_k3s.yml
+│   ├── install_docker.yml
+│   ├── nginx.yml
+│   └── deploy_app.yml
 ├── app/
-│   ├── app.py              # Python Application
-│   ├── static  
-│   └── templates      
-├── Dockerfile              # Docker instructions
-├── requirements.txt        # Python dependencies
-├── service.yml        
-└── marineford.yml          # Kubernetes Deployment and Service manifests
+│   ├── app.py
+│   ├── static/
+│   └── templates/
+├── Dockerfile
+├── requirements.txt
+├── service.yml
+└── marineford.yml
 ```
----
-## 🔮 Future Work
 
-The next immediate steps for this project are:
+## Roadmap
 
-- [ ] **GitOps Implementation:** Replacing the push-based model (Ansible) with a pull-based model using **ArgoCD**.
-- [ ] **Observability:** Deploying a full monitoring stack with **Prometheus & Grafana** via Helm Charts to visualize CPU/RAM metrics.
-- [ ] **Ingress Controller:** Setting up Traefik or Nginx for proper domain routing and HTTPS.
+- [ ] GitOps deployment with ArgoCD.
+- [ ] Monitoring and visualization with Prometheus and Grafana.
+- [ ] Ingress configuration for external application access.
+
 ---
-*Project created by **FWassim** - 2026*
+
+<div align="center">
+
+**Developed by [FWassim](https://github.com/FWassim)**
+
+<sub>Learning by building, automating and improving.</sub>
+
+</div>
