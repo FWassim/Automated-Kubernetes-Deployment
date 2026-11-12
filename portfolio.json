@@ -21,3 +21,4 @@
     "en": "A push to `main` automatically builds and publishes the new image; an Ansible playbook then deploys it to the cluster. The cluster and application configuration is version-controlled in the repository. Two real-world issues solved along the way: dynamic IP addresses (static addressing with Netplan) and stale cached images (`imagePullPolicy: Always`)."
   }
 }
+}
